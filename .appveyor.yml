@@ -1,0 +1,37 @@
+# configuration for "master" branch
+-
+  configuration: Release
+  branches:
+      only:
+        - master
+  version: 1.0.{build}
+  environment:
+    GITHUB_USERNAME:
+      secure: 86JZa9jj569F9ziNiLC63A
+    GITHUB_TOKEN:
+      secure: 6sRA5gs7xWTQCfPqgdIm6A==
+  build_script:
+  - ps: ./build.ps1
+  artifacts:
+  - path: artifacts/*
+  test: off
+  
+# configuration for "develop" branch
+-
+  configuration: Development
+  branches:
+      except:
+          - master          
+  version: 1.0.{build}
+  skip_branch_with_pr: true
+  build_script:
+  - ps: ./build.ps1
+  artifacts:
+  - path: artifacts/*
+  test: off
+
+# "fall back" configuration for all other branches
+# no "branches" section defined
+# do not deploy at all
+-
+  configuration: Development
