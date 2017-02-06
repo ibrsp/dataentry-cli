@@ -71,7 +71,7 @@ Task("nuget-restore")
 });
 
 Task("update-assembly-info")
-    .WithCriteria(() => local == true)
+    .WithCriteria(() => local == false)
     .Does(() => 
 {
     CreateAssemblyInfo(assemblyInfo, new AssemblyInfoSettings {
@@ -103,9 +103,10 @@ Task("build")
                         .WithTarget("Build")
                         .WithProperty("TreatWarningsAsErrors", treatWarningsAsErrors)); 
     
-    var buildArtifactspath = GetDirectories("./src/**/bin/" + configuration).Single();
+    var buildArtifactsPath = GetDirectories("./src/**/bin/" + configuration).Single();
     var outputFileName =  string.Concat(artifactDirectory, "v", semVersion, ".zip");
-    Zip(buildArtifactspath, outputFileName);
+    EnsureDirectoryExists(artifactDirectory);
+    Zip(buildArtifactsPath, outputFileName);
    
 
 });
