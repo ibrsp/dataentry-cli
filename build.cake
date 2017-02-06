@@ -102,6 +102,11 @@ Task("build")
                         .SetVerbosity(Verbosity.Minimal)
                         .WithTarget("Build")
                         .WithProperty("TreatWarningsAsErrors", treatWarningsAsErrors)); 
+    
+    var buildArtifactspath = GetDirectories("./src/**/bin/" + configuration).Single();
+    var outputFileName =  string.Concat(artifactDirectory, "v", semVersion, ".zip");
+    Zip(buildArtifactspath, outputFileName);
+   
 
 });
 
