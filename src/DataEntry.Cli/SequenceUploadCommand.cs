@@ -115,10 +115,13 @@ namespace DataEntry.Cli
 
         protected override int Execute()
         {
+            var reporter = new Reporter(_debug.HasValue());
+
+
             var pattern = _filePath.Value;
             var pathRoot = Path.GetPathRoot(_filePath.Value);
             var isPathRooted = string.IsNullOrWhiteSpace(pathRoot) == false;
-
+            reporter.WriteInformation("TODO: Find mathing files");
             var matchedFiles = new Matcher()
                 .AddInclude(isPathRooted
                     ? pattern.Substring(pathRoot.Length)
@@ -134,10 +137,13 @@ namespace DataEntry.Cli
                 throw new InvalidOperationException();
             }
 
+            reporter.WriteInformation("TODO: parsing matched files");
+
             var payload = matchedFiles
                 .SelectMany(fn => ParseSequencePayload(File.OpenRead(fn)))
                 .ToList();
 
+            reporter.WriteInformation("TODO: Build request");
             var requestUrl = _baseUrl.Value
                 .AppendPathSegments(Constants.ApiSegments.Api, Constants.ApiSegments.Sequence)
                 .SetQueryParams(new
@@ -152,7 +158,7 @@ namespace DataEntry.Cli
                 .Result
                 .ToList();
 
-
+            reporter.WriteInformation("TODO: Save output");
             var outputDirectory = Path.GetDirectoryName(_output.Value());
 
             if (string.IsNullOrEmpty(outputDirectory) == false && Directory.Exists(outputDirectory) == false)
