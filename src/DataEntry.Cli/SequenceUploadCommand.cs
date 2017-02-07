@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using CsvHelper;
 using Flurl;
 using Flurl.Http;
@@ -43,11 +44,6 @@ namespace DataEntry.Cli
             _dryRun = cmd.Option(
                 "-n |--dryrun",
                 "Do nothing; only show what would happen",
-                CommandOptionType.NoValue);
-
-            _stopOnError = cmd.Option(
-                "-s | --stop-on-error",
-                "TODO",
                 CommandOptionType.NoValue);
 
             _truncate = cmd.Option(
@@ -106,6 +102,16 @@ namespace DataEntry.Cli
             {
                 throw new ArgumentNullException(_clientSecret.LongName);
             }
+
+            if (string.IsNullOrEmpty(_output.Value()))
+            {
+                throw new ArgumentNullException(_output.LongName);
+            }
+
+            if (string.IsNullOrEmpty(Path.GetFileName(_output.Value())))
+            {
+                throw new ArgumentException(_output.LongName);
+            }
         }
 
         protected override int Execute()
@@ -145,9 +151,39 @@ namespace DataEntry.Cli
             var response = requestUrl
                 .PostJsonAsync(payload) //throw exception if (IsSuccessStatusCode == false)
                 .ReceiveJson<IEnumerable<SequenceResponsePayload>>()
-                .Result;
+                .Result
+                .ToList();
+
+
+            var outputDirectory = Path.GetDirectoryName(_output.Value());
+
+            if (string.IsNullOrEmpty(outputDirectory) == false && Directory.Exists(outputDirectory) == false)
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+
+            if (File.Exists(_output.Value()))
+            {
+                File.Delete(_output.Value());
+            }
+            var fileOutputWriter = new StreamWriter(File.OpenWrite(_output.Value()));
+
+
+            WriteOutput(fileOutputWriter, response);
 
             return base.Execute();
+        }
+
+        private void WriteOutput(TextWriter outputWriter, IEnumerable<SequenceResponsePayload> data)
+        {
+            using (var csvWriter = new CsvWriter(outputWriter))
+            {
+                foreach (var record in data)
+                {
+                    csvWriter.WriteRecord(record);
+                    csvWriter.NextRecord();
+                }
+            }
         }
 
         private IEnumerable<SequenceRequestPayload> ParseSequencePayload(Stream data)
@@ -185,9 +221,10 @@ namespace DataEntry.Cli
             public string SraIdentifiers { get; set; }
         }
 
-        private class SequenceResponsePayload: SequenceRequestPayload
+        private class SequenceResponsePayload : SequenceRequestPayload
         {
-            
+            public string Status { get; set; }
+            public string Message { get; set; }
         }
     }
 }
