@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.CommandLineUtils;
+﻿using System;
+using Microsoft.Extensions.CommandLineUtils;
 
 namespace DataEntry.Cli
 {
@@ -68,6 +69,35 @@ namespace DataEntry.Cli
 
 
             base.DefineArgumentsAndOptions(cmd);
+        }
+
+        protected override void Validate()
+        {
+            if (string.IsNullOrEmpty(_filePath.Value))
+            {
+                throw new ArgumentNullException(_filePath.Name);
+            }
+
+            if (string.IsNullOrEmpty(_baseUrl.Value))
+            {
+                throw new ArgumentNullException(_baseUrl.Name);
+            }
+
+            Uri baseUri;
+            if (Uri.TryCreate(_baseUrl.Value, UriKind.Absolute, out baseUri) == false)
+            {
+                throw new ArgumentException(_baseUrl.Name);
+            }
+
+            if (string.IsNullOrEmpty(_clientId.Value()))
+            {
+                throw new ArgumentNullException(_clientId.LongName);
+            }
+
+            if (string.IsNullOrEmpty(_clientSecret.Value()))
+            {
+                throw new ArgumentNullException(_clientSecret.LongName);
+            }
         }
     }
 }
