@@ -105,10 +105,19 @@ namespace DataEntry.Cli
 
         protected override int Execute()
         {
+            var pattern = _filePath.Value;
+            var pathRoot = Path.GetPathRoot(_filePath.Value);
+            var isPathRooted = string.IsNullOrWhiteSpace(pathRoot) == false;
+
             var payload = new Matcher()
-                .AddInclude(_filePath.Value)
-                .GetResultsInFullPath(Directory.GetCurrentDirectory())
+                .AddInclude(isPathRooted
+                    ? pattern.Substring(pathRoot.Length)
+                    : pattern )
+                .GetResultsInFullPath(isPathRooted
+                    ? pathRoot
+                    : Directory.GetCurrentDirectory())
                 .ToList();
+
 
             if (payload.Any() == false)
             {
