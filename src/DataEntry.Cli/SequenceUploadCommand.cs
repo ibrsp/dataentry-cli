@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CsvHelper;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -109,7 +111,7 @@ namespace DataEntry.Cli
             var pathRoot = Path.GetPathRoot(_filePath.Value);
             var isPathRooted = string.IsNullOrWhiteSpace(pathRoot) == false;
 
-            var payload = new Matcher()
+            var matchedFiles = new Matcher()
                 .AddInclude(isPathRooted
                     ? pattern.Substring(pathRoot.Length)
                     : pattern )
@@ -119,12 +121,51 @@ namespace DataEntry.Cli
                 .ToList();
 
 
-            if (payload.Any() == false)
+            if (matchedFiles.Any() == false)
             {
                 throw new InvalidOperationException();
             }
 
+            var payload = matchedFiles
+                .SelectMany(fn => ParseSequencePayload(File.OpenRead(fn)))
+                .ToList();
+
             return base.Execute();
+        }
+
+        private IEnumerable<SequenceRequestPayload> ParseSequencePayload(Stream data)
+        {
+            using (var reader = new CsvReader(new StreamReader(data)))
+            {
+                while (reader.Read())
+                {
+                    yield return new SequenceRequestPayload
+                    {
+                        OrganizationIdentifier = reader.GetField<string>(0),
+                        PatientIdentifier = reader.GetField<string>(1),
+                        SpecimenIdentifier = reader.GetField<string>(2),
+                        SpecimenCollectedDate = reader.GetField<string>(3),
+                        SourceOrganism = reader.GetField<string>(4),
+                        TaxonIdentifier = reader.GetField<string>(5),
+                        BioProject = reader.GetField<string>(6),
+                        BioSample = reader.GetField<string>(7),
+                        SraIdentifiers = reader.GetField<string>(8),
+                    };
+                }
+            }
+        }
+
+        private class SequenceRequestPayload
+        {
+            public string OrganizationIdentifier { get; set; }
+            public string PatientIdentifier { get; set; }
+            public string SpecimenIdentifier { get; set; }
+            public string SpecimenCollectedDate { get; set; }
+            public string SourceOrganism { get; set; }
+            public string TaxonIdentifier { get; set; }
+            public string BioProject { get; set; }
+            public string BioSample { get; set; }
+            public string SraIdentifiers { get; set; }
         }
     }
 }
