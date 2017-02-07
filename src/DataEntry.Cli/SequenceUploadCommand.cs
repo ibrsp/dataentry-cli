@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using CsvHelper;
+using Flurl;
+using Flurl.Http;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -114,7 +117,7 @@ namespace DataEntry.Cli
             var matchedFiles = new Matcher()
                 .AddInclude(isPathRooted
                     ? pattern.Substring(pathRoot.Length)
-                    : pattern )
+                    : pattern)
                 .GetResultsInFullPath(isPathRooted
                     ? pathRoot
                     : Directory.GetCurrentDirectory())
@@ -129,6 +132,20 @@ namespace DataEntry.Cli
             var payload = matchedFiles
                 .SelectMany(fn => ParseSequencePayload(File.OpenRead(fn)))
                 .ToList();
+
+            var requestUrl = _baseUrl.Value
+                .AppendPathSegments(Constants.ApiSegments.Api, Constants.ApiSegments.Sequence)
+                .SetQueryParams(new
+                {
+                    dryRun = _dryRun.HasValue(),
+                    stopOnError = _stopOnError.HasValue(),
+                    truncate = _truncate.HasValue(),
+                });
+
+            var response = requestUrl
+                .PostJsonAsync(payload) //throw exception if (IsSuccessStatusCode == false)
+                .ReceiveJson<IEnumerable<SequenceResponsePayload>>()
+                .Result;
 
             return base.Execute();
         }
@@ -166,6 +183,11 @@ namespace DataEntry.Cli
             public string BioProject { get; set; }
             public string BioSample { get; set; }
             public string SraIdentifiers { get; set; }
+        }
+
+        private class SequenceResponsePayload: SequenceRequestPayload
+        {
+            
         }
     }
 }
