@@ -33,12 +33,13 @@ namespace DataEntry.Cli
                     .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                     .InformationalVersion);
 
-
-            app.OnExecute(() =>
-            {
-                app.ShowHelp();
-                return Constants.ExitCodes.Ok;
-            });
+            app
+                .RegisterCommand<SequenceUploadCommand>()
+                .OnExecute(() =>
+                {
+                    app.ShowHelp();
+                    return Constants.ExitCodes.Ok;
+                });
 
             try
             {
