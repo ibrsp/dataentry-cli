@@ -16,7 +16,6 @@ namespace DataEntry.Cli
     {
         private CommandArgument _filePath;
         private CommandOption _dryRun;
-        private CommandOption _stopOnError;
         private CommandOption _truncate;
         private CommandArgument _baseUrl;
         private CommandOption _output;
@@ -144,7 +143,6 @@ namespace DataEntry.Cli
                 .SetQueryParams(new
                 {
                     dryRun = _dryRun.HasValue(),
-                    stopOnError = _stopOnError.HasValue(),
                     truncate = _truncate.HasValue(),
                 });
 
