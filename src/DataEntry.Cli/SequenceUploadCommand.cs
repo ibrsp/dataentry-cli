@@ -1,5 +1,8 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 using Microsoft.Extensions.CommandLineUtils;
+using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace DataEntry.Cli
 {
@@ -98,6 +101,21 @@ namespace DataEntry.Cli
             {
                 throw new ArgumentNullException(_clientSecret.LongName);
             }
+        }
+
+        protected override int Execute()
+        {
+            var payload = new Matcher()
+                .AddInclude(_filePath.Value)
+                .GetResultsInFullPath(Directory.GetCurrentDirectory())
+                .ToList();
+
+            if (payload.Any() == false)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return base.Execute();
         }
     }
 }
