@@ -18,7 +18,6 @@ namespace DataEntry.Cli
 
             cmd.OnExecute(() =>
             {
-                cmd.ShowRootCommandFullNameAndVersion();
                 try
                 {
                     Validate();

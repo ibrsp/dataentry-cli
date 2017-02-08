@@ -19,7 +19,7 @@ namespace DataEntry.Cli
         private CommandOption _truncate;
         private CommandArgument _baseUrl;
         private CommandOption _output;
-        private CommandOption _debug;
+        private CommandOption _quiet;
         private CommandOption _clientId;
         private CommandOption _clientSecret;
 
@@ -31,43 +31,46 @@ namespace DataEntry.Cli
         protected override void DefineArgumentsAndOptions(CommandLineApplication cmd)
         {
             cmd.Description = "Upload sequences results to data entry";
-
+            cmd.ExtendedHelpText = @"
+Examples:
+  de sequence-upload ./data/**/2016/*.csv http://localhost --client-secret YOUR_CLIENT_SECRET --client-id YOUR_CLIENT_ID -o ./report.csv  
+";
             _filePath = cmd.Argument(
-                "<RESULTS>",
-                "Path file to results.");
+                "<FILENAME>",
+                "File name pattern that the matcher use to discover files. Use '*' to represent wildcards in file and directory names. Use '**' to represent arbitrary directory depth. Use '..' to represent a parent directory.");
 
             _baseUrl = cmd.Argument(
-                "<BASE URL>",
-                "TODO");
+                "<BASEURL>",
+                "Base URL to the dataentry portal. Should be a valid URL.");
 
             _dryRun = cmd.Option(
                 "-n |--dryrun",
-                "Do nothing; only show what would happen",
+                "Do nothing; only show what would happen.",
                 CommandOptionType.NoValue);
 
             _truncate = cmd.Option(
                 "-t | --truncate",
-                "TODO",
+                "Delete all sequences on the server before upload.",
                 CommandOptionType.NoValue);
 
             _output = cmd.Option(
-                "-o | --output",
-                "TODO",
+                "-o | --output <FILEPATH>",
+                "Path to report file.",
                 CommandOptionType.SingleValue);
 
-            _debug = cmd.Option(
-                "--debug",
-                "TODO",
+            _quiet = cmd.Option(
+                "--quiet",
+                "Suppresses all output except warnings and errors.",
                 CommandOptionType.NoValue);
 
             _clientId = cmd.Option(
                 "--client-id",
-                "TODO",
+                "",
                 CommandOptionType.SingleValue);
 
             _clientSecret = cmd.Option(
                 "--client-secret",
-                "TODO",
+                "",
                 CommandOptionType.SingleValue);
 
 
@@ -115,35 +118,40 @@ namespace DataEntry.Cli
 
         protected override int Execute()
         {
-            var reporter = new Reporter(_debug.HasValue());
+            var reporter = new Reporter(_quiet.HasValue());
 
-
-            var pattern = _filePath.Value;
             var pathRoot = Path.GetPathRoot(_filePath.Value);
             var isPathRooted = string.IsNullOrWhiteSpace(pathRoot) == false;
-            reporter.WriteInformation("TODO: Find mathing files");
+
+            var pattern = _filePath.Value;
+            pattern = isPathRooted
+                ? pattern.Substring(pathRoot.Length)
+                : pattern;
+            var directory = isPathRooted
+                ? pathRoot
+                : Directory.GetCurrentDirectory();
+
+            reporter.WriteOutput($"Looking for all files matching pattern - \"{pattern}\"");
+            reporter.WriteOutput($"Directory specified for all files matching pattern - \"{directory}\"");
+
             var matchedFiles = new Matcher()
-                .AddInclude(isPathRooted
-                    ? pattern.Substring(pathRoot.Length)
-                    : pattern)
-                .GetResultsInFullPath(isPathRooted
-                    ? pathRoot
-                    : Directory.GetCurrentDirectory())
+                .AddInclude(pattern)
+                .GetResultsInFullPath(directory)
                 .ToList();
 
+            reporter.WriteOutput($"There are {matchedFiles.Count} files mathing");
 
             if (matchedFiles.Any() == false)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("There are no files mathing specified pattern");
             }
 
-            reporter.WriteInformation("TODO: parsing matched files");
-
+            reporter.WriteOutput("Try parse all matching files");
             var payload = matchedFiles
                 .SelectMany(fn => ParseSequencePayload(File.OpenRead(fn)))
                 .ToList();
 
-            reporter.WriteInformation("TODO: Build request");
+            reporter.WriteOutput("Building API request from specified options and arguments");
             var requestUrl = _baseUrl.Value
                 .AppendPathSegments(Constants.ApiSegments.Api, Constants.ApiSegments.Sequence)
                 .SetQueryParams(new
@@ -152,13 +160,14 @@ namespace DataEntry.Cli
                     truncate = _truncate.HasValue(),
                 });
 
+            reporter.WriteOutput($"Sending request to the server \"{requestUrl}\"");
             var response = requestUrl
                 .PostJsonAsync(payload) //throw exception if (IsSuccessStatusCode == false)
                 .ReceiveJson<IEnumerable<SequenceResponsePayload>>()
                 .Result
                 .ToList();
 
-            reporter.WriteInformation("TODO: Save output");
+            
             var outputDirectory = Path.GetDirectoryName(_output.Value());
 
             if (string.IsNullOrEmpty(outputDirectory) == false && Directory.Exists(outputDirectory) == false)
@@ -172,7 +181,7 @@ namespace DataEntry.Cli
             }
             var fileOutputWriter = new StreamWriter(File.OpenWrite(_output.Value()));
 
-
+            reporter.WriteOutput($"Save server report to the file {_output.Value()}");
             WriteOutput(fileOutputWriter, response);
 
             return base.Execute();
@@ -184,7 +193,17 @@ namespace DataEntry.Cli
             {
                 foreach (var record in data)
                 {
-                    csvWriter.WriteRecord(record);
+                    csvWriter.WriteField<string>(record.OrganizationIdentifier);
+                    csvWriter.WriteField<string>(record.PatientIdentifier);
+                    csvWriter.WriteField<string>(record.SpecimenIdentifier);
+                    csvWriter.WriteField<string>(record.SpecimenCollectedDate);
+                    csvWriter.WriteField<string>(record.SourceOrganism);
+                    csvWriter.WriteField<string>(record.TaxonIdentifier);
+                    csvWriter.WriteField<string>(record.BioProject);
+                    csvWriter.WriteField<string>(record.BioSample);
+                    csvWriter.WriteField<string>(record.SraIdentifiers);
+                    csvWriter.WriteField<string>(record.Status);
+                    csvWriter.WriteField<string>(record.Message);
                     csvWriter.NextRecord();
                 }
             }

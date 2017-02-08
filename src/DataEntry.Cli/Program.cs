@@ -41,15 +41,30 @@ namespace DataEntry.Cli
                     return Constants.ExitCodes.Ok;
                 });
 
+            var reporter = new Reporter(false);
             try
             {
                 return app.Execute(args);
             }
+            catch (AggregateException ex)
+            {
+                var flattenedAggregateException = ex.Flatten();
+
+                foreach (var innerException in flattenedAggregateException.InnerExceptions)
+                {
+                    reporter.WriteError(innerException.Message);
+                }
+
+            }
+            catch (CommandParsingException ex)
+            {
+                reporter.WriteError(ex.Message);
+                ex.Command.ShowHelp();
+            }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.Message);
-
-                (ex as CommandParsingException)?.Command.ShowHelp();
+                reporter.WriteError(ex.Message);
+                reporter.WriteError("An unexpected error occurred");
             }
 
             return Constants.ExitCodes.Bad;

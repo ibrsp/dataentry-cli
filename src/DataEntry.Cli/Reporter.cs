@@ -7,7 +7,7 @@ namespace DataEntry.Cli
 {
     internal class Reporter
     {
-        private readonly bool _debug;
+        private readonly bool _queit;
         private readonly AnsiConsole _error = AnsiConsole.GetError(true);
         private readonly AnsiConsole _out = AnsiConsole.GetOutput(true);
 
@@ -17,9 +17,9 @@ namespace DataEntry.Cli
         private const string Yellow = "\x1b[33m";
 
 
-        public Reporter(bool debug)
+        public Reporter(bool queit)
         {
-            _debug = debug;
+            _queit = queit;
         }
 
         private string Colorize(string value, Func<string, string> colorizeFunc)
@@ -35,22 +35,17 @@ namespace DataEntry.Cli
 
         public void WriteWarning(string message)
         {
-            WriteOutput(Prefix("warn:    ", Colorize(message, x => Bold + Yellow + x + Reset)));
+            _out.WriteLine(Prefix("warn:    ", Colorize(message, x => Bold + Yellow + x + Reset)));
         }
 
 
-        private void WriteOutput(string message)
+        public void WriteOutput(string message)
         {
-            if (_debug == false)
+            if (_queit)
             {
                 return;
             }
-            _out.WriteLine(message);
-        }
-
-        public void WriteInformation(string message)
-        {
-            WriteOutput(Prefix("info:    ", message));
+            _out.WriteLine(Prefix("info:    ", message));
         }
 
 
