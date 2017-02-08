@@ -33,8 +33,44 @@ cd  $latestRelease.name
 
 ## Usage
 
+Get list supported commands and options:
+
 ```
+de -?
 ```
+
+Get help for sequence-upload command:
+
+```
+de sequence-upload -?
+```
+
+Imaging you have the following directory structure:
+
+```
+results
+└───BY
+│   │   2016.csv
+│   │   2015.csv
+|   |
+|   └───2014
+│       │   results.csv
+│   
+└───AZ
+    │   results.csv
+```
+To upload all results from all sub folders, you could use glogging in file path argumnet:
+```
+de sequence-upload ./results/**/*.csv http://localhost -o ./report.csv -t
+```
+To simulate upload use `--dryrun` option:
+```
+de sequence-upload ./results/**/*.csv http://localhost -o ./report.csv -t --dryrun
+```
+
+## Important
+
+Sequence upload support append only mode, in case of data modification or getting new result please use `--truncate` option to drop existing data.
 
 ## Contribute
 
