@@ -1,6 +1,10 @@
-# Title
+# DataEntry CLI
 
-> This is an example file with default selections.
+## Build Status
+
+|Develop|Master|
+|:--:|:--:|
+|[![Build status](https://ci.appveyor.com/api/projects/status/ui4lsw0yb7g926tf/branch/develop?svg=true)](https://ci.appveyor.com/project/eugene-sergueev/dataentry-cli/branch/develop)|[![Build status](https://ci.appveyor.com/api/projects/status/ui4lsw0yb7g926tf/branch/develop?svg=true)](https://ci.appveyor.com/project/eugene-sergueev/dataentry-cli/branch/master)|
 
 ## Table of Contents
 
