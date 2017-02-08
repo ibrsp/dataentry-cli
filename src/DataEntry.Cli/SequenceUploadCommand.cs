@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using CsvHelper;
+using CsvHelper.Configuration;
 using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.CommandLineUtils;
@@ -191,24 +192,16 @@ Examples:
         {
             using (var csvWriter = new CsvWriter(outputWriter))
             {
+                csvWriter.Configuration.RegisterClassMap<ReportMap>();
+                csvWriter.WriteHeader<SequenceResponsePayload>();
                 foreach (var record in data)
                 {
-                    csvWriter.WriteField<string>(record.OrganizationIdentifier);
-                    csvWriter.WriteField<string>(record.PatientIdentifier);
-                    csvWriter.WriteField<string>(record.SpecimenIdentifier);
-                    csvWriter.WriteField<string>(record.SpecimenCollectedDate);
-                    csvWriter.WriteField<string>(record.SourceOrganism);
-                    csvWriter.WriteField<string>(record.TaxonIdentifier);
-                    csvWriter.WriteField<string>(record.BioProject);
-                    csvWriter.WriteField<string>(record.BioSample);
-                    csvWriter.WriteField<string>(record.SraIdentifiers);
-                    csvWriter.WriteField<string>(record.Status);
-                    csvWriter.WriteField<string>(record.Message);
-                    csvWriter.NextRecord();
+                    csvWriter.WriteRecord(record);
                 }
             }
         }
 
+       
         private IEnumerable<SequenceRequestPayload> ParseSequencePayload(Stream data)
         {
             using (var reader = new CsvReader(new StreamReader(data)))
@@ -248,6 +241,24 @@ Examples:
         {
             public string Status { get; set; }
             public string Message { get; set; }
+        }
+
+        private class ReportMap : CsvClassMap<SequenceResponsePayload>
+        {
+            public ReportMap()
+            {
+                Map(m => m.OrganizationIdentifier).Name("organization_identifier").NameIndex(0);
+                Map(m => m.PatientIdentifier).Name("patient_local_identifier").NameIndex(1);
+                Map(m => m.SpecimenIdentifier).Name("specimen_local_identifier").NameIndex(2);
+                Map(m => m.SpecimenCollectedDate).Name("specimen_collected_date").NameIndex(3);
+                Map(m => m.SourceOrganism).Name("ncbi_source_organism").NameIndex(4);
+                Map(m => m.TaxonIdentifier).Name("ncbi_taxon_id").NameIndex(5);
+                Map(m => m.BioProject).Name("ncbi_bio_project_accession").NameIndex(6);
+                Map(m => m.BioSample).Name("ncbi_bio_sample_accession").NameIndex(7);
+                Map(m => m.SraIdentifiers).Name("ncbi_sra_accession").NameIndex(8);
+                Map(m => m.Status).Name("status").NameIndex(9);
+                Map(m => m.Message).Name("message").NameIndex(10);
+            }
         }
     }
 }
