@@ -15,8 +15,7 @@
 
 ## Install
 
-```
-```
+[![GitHub release](https://img.shields.io/github/release/ibrsp/dataentry-cli.svg)](https://github.com/ibrsp/dataentry-cli/releases/latest)
 
 ## Usage
 
