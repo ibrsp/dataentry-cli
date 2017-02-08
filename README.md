@@ -17,6 +17,20 @@
 
 [![GitHub release](https://img.shields.io/github/release/ibrsp/dataentry-cli.svg)](https://github.com/ibrsp/dataentry-cli/releases/latest)
 
+Download the latest stable release from [GitHub release](https://github.com/ibrsp/dataentry-cli/releases/latest) or use PowerShell script:
+
+```PowerShell 
+$uri = 'https://api.github.com/repos/ibrsp/dataentry-cli/releases/latest'
+$latestRelease = Invoke-RestMethod -Uri $uri -Method GET
+$outFileName =  "./$($latestRelease.name).zip"
+
+Invoke-WebRequest -Uri $LatestRelease.zipball_url -OutFile $outFileName -Method Get
+
+Expand-Archive -Path $outFileName -DestinationPath $latestRelease.name  -Force
+
+cd  $latestRelease.name
+```
+
 ## Usage
 
 ```
