@@ -41,6 +41,10 @@ var buildVersion = gitVersion.FullBuildMetaData;
 var solutionFile = "DataEntry.Cli.sln";
 var assemblyInfo = "./src/DataEntry.Cli/Properties/AssemblyInfo.cs"; 
 
+// GitHub release variables
+var githubOwner = "ibrsp";
+var githubRepository = "dataentry-cli";
+
 ///////////////////////////////////////////////////////////////////////////////
 // SETUP / TEARDOWN
 ///////////////////////////////////////////////////////////////////////////////
@@ -85,16 +89,12 @@ Task("update-assembly-info")
 
 Task("update-appveyor-build-number")
     .WithCriteria(() => isRunningOnAppVeyor)
-    .Does(() => AppVeyor.UpdateBuildVersion(buildVersion));
-
-Task("update-version")
-    .IsDependentOn("update-assembly-info")
-    .IsDependentOn("update-appveyor-build-number");
+    .Does(() => AppVeyor.UpdateBuildVersion(buildVersion));    
 
 Task("build")
     .IsDependentOn("clean")
     .IsDependentOn("nuget-restore")
-    .IsDependentOn("update-version")
+    .IsDependentOn("update-assembly-info")
     .Does(() =>
 {
     DotNetBuild(solutionFile, settings =>
@@ -111,12 +111,73 @@ Task("build")
 
 });
 
+Task("create-pre-release")
+    .IsDependentOn("build")
+
+    .WithCriteria(() => !local)
+    .WithCriteria(() => !isPullRequest)
+    .WithCriteria(() => isReleaseBranch)
+    .WithCriteria(() => !isTagged)
+
+    .Does (() =>
+{
+    var username = EnvironmentVariable("GITHUB_USERNAME");
+    if (string.IsNullOrEmpty(username))
+    {
+        throw new Exception("The GITHUB_USERNAME environment variable is not defined.");
+    }
+
+    var token = EnvironmentVariable("GITHUB_TOKEN");
+    if (string.IsNullOrEmpty(token))
+    {
+        throw new Exception("The GITHUB_TOKEN environment variable is not defined.");
+    }
+
+    GitReleaseManagerCreate(username, token, githubOwner, githubRepository, new GitReleaseManagerCreateSettings {
+        Milestone         = majorMinorPatch,
+        Name              = majorMinorPatch,
+        Prerelease        = true,
+        TargetCommitish   = "master"
+    });
+
+    var asset =  string.Concat(artifactDirectory, "v", semVersion, ".zip");
+
+    GitReleaseManagerAddAssets(username, token, githubOwner, githubRepository, majorMinorPatch, asset);
+});    
+
+Task("publish-release")
+    .IsDependentOn("build")
+
+    .WithCriteria(() => !local)
+    .WithCriteria(() => !isPullRequest)
+    .WithCriteria(() => isReleaseBranch)
+    .WithCriteria(() => isTagged)
+
+    .Does (() =>
+{
+    var username = EnvironmentVariable("GITHUB_USERNAME");
+    if (string.IsNullOrEmpty(username))
+    {
+        throw new Exception("The GITHUB_USERNAME environment variable is not defined.");
+    }
+
+    var token = EnvironmentVariable("GITHUB_TOKEN");
+    if (string.IsNullOrEmpty(token))
+    {
+        throw new Exception("The GITHUB_TOKEN environment variable is not defined.");
+    }
+
+    GitReleaseManagerClose(username, token, githubOwner, githubRepository, majorMinorPatch);
+});
 
 //////////////////////////////////////////////////////////////////////
 // TASK TARGETS
 //////////////////////////////////////////////////////////////////////
 Task("default")
-  .IsDependentOn("build");
+  ..IsDependentOn("update-appveyor-build-number")
+  .IsDependentOn("build")
+  .IsDependentOn("create-pre-release")
+  .IsDependentOn("publish-release");
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION
