@@ -174,7 +174,7 @@ Task("publish-release")
 // TASK TARGETS
 //////////////////////////////////////////////////////////////////////
 Task("default")
-  ..IsDependentOn("update-appveyor-build-number")
+  .IsDependentOn("update-appveyor-build-number")
   .IsDependentOn("build")
   .IsDependentOn("create-pre-release")
   .IsDependentOn("publish-release");
