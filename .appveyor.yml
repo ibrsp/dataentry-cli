@@ -7,9 +7,9 @@
   version: 1.0.{build}
   environment:
     GITHUB_USERNAME:
-      secure: 86JZa9jj569F9ziNiLC63A
+      secure: GSAHxMHKjqQYnQRhOtw7EQ==
     GITHUB_TOKEN:
-      secure: 6sRA5gs7xWTQCfPqgdIm6A==
+      secure: 2UYPgWolkgPkTWaF0PbxbinjALupedRCsiFaPOXvtB9BzzdzyUb6TFkh+DWA5zNv
   build_script:
   - ps: ./build.ps1
   artifacts:
