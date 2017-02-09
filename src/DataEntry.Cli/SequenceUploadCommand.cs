@@ -8,6 +8,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using Flurl;
 using Flurl.Http;
+using IdentityModel.Client;
 using Microsoft.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -152,6 +153,15 @@ Examples:
                 .SelectMany(fn => ParseSequencePayload(File.OpenRead(fn)))
                 .ToList();
 
+            reporter.WriteOutput("Obtaining access token");
+
+            var client = new TokenClient(
+                $"{_baseUrl.Value}/identity/connect/token",
+                _clientId.Value(),
+                _clientSecret.Value());
+
+            var token = client.RequestClientCredentialsAsync("depot").Result;
+
             reporter.WriteOutput("Building API request from specified options and arguments");
             var requestUrl = _baseUrl.Value
                 .AppendPathSegments(Constants.ApiSegments.Api, Constants.ApiSegments.Sequence)
@@ -161,14 +171,17 @@ Examples:
                     truncate = _truncate.HasValue(),
                 });
 
+            
+
             reporter.WriteOutput($"Sending request to the server \"{requestUrl}\"");
             var response = requestUrl
+                .WithOAuthBearerToken(token.AccessToken)
                 .PostJsonAsync(payload) //throw exception if (IsSuccessStatusCode == false)
                 .ReceiveJson<IEnumerable<SequenceResponsePayload>>()
                 .Result
                 .ToList();
 
-            
+
             var outputDirectory = Path.GetDirectoryName(_output.Value());
 
             if (string.IsNullOrEmpty(outputDirectory) == false && Directory.Exists(outputDirectory) == false)
@@ -201,7 +214,7 @@ Examples:
             }
         }
 
-       
+
         private IEnumerable<SequenceRequestPayload> ParseSequencePayload(Stream data)
         {
             using (var reader = new CsvReader(new StreamReader(data)))
