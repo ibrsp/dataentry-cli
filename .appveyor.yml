@@ -16,7 +16,7 @@
   - path: artifacts/*
   test: off
   cache:
-  - packages -> src/**/packages.config
+  - packages -> src\**\packages.config
   - tools -> .build/tools.cake
   
 # configuration for "develop" branch
@@ -33,7 +33,7 @@
   - path: artifacts/*
   test: off
   cache:
-  - packages -> src/**/packages.config
+  - packages -> src\**\packages.config
   - tools -> .build/tools.cake
 
 # "fall back" configuration for all other branches
