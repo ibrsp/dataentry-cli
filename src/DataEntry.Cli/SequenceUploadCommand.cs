@@ -232,6 +232,8 @@ Examples:
                         BioProject = reader.GetField<string>(6),
                         BioSample = reader.GetField<string>(7),
                         SraIdentifiers = reader.GetField<string>(8),
+                        OctalSpoligotype = reader.GetField<string>(9),
+                        Lineage = reader.GetField<string>(10),
                     };
                 }
             }
@@ -248,6 +250,8 @@ Examples:
             public string BioProject { get; set; }
             public string BioSample { get; set; }
             public string SraIdentifiers { get; set; }
+            public string OctalSpoligotype { get; set; }
+            public string Lineage { get; set; }
         }
 
         private class SequenceResponsePayload : SequenceRequestPayload
